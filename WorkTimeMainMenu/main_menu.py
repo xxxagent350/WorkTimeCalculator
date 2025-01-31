@@ -1,0 +1,89 @@
+import os.path
+import tkinter as tk
+from tkinter import messagebox, filedialog
+import pickle_operator
+import project
+
+PROJECTS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/projects.pkl')
+
+def main_menu():
+    def refresh_project_list():
+        saved_projects['needs_update_13571'] = True # Наличие этого ключа означает что work_time_analyser.registered_projects необходимо обновить с диска
+        success, error_ = pickle_operator.try_save_data(saved_projects, PROJECTS_DATA_PATH)
+        print(f's: {success}, e: {error_}')
+        project_list.delete(0, tk.END)
+        for project_name in saved_projects:
+            if project_name == 'needs_update_13571':
+                continue
+            project = saved_projects[project_name]
+            status = "Игнорируется" if project.ignore else "Активен"
+            project_list.insert(tk.END, f"{project_name} – {status}  ({saved_projects[project_name].project_path})")
+
+    def change_project_path():
+        selected_index = project_list.curselection()
+        if not selected_index:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, выберите проект из списка!")
+            return
+
+        selected_project_name = project_list.get(selected_index[0]).split(" – ")[0]
+        new_path = filedialog.askdirectory(title="Выберите новый путь для проекта")
+        if new_path:
+            saved_projects[selected_project_name].project_path = new_path
+            messagebox.showinfo("Успех", f"Путь для проекта '{selected_project_name}' обновлен.")
+        refresh_project_list()
+
+    def toggle_ignore_status():
+        selected_index = project_list.curselection()
+        if not selected_index:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, выберите проект из списка!")
+            return
+
+        selected_project_name = project_list.get(selected_index[0]).split(" – ")[0]
+        project = saved_projects[selected_project_name]
+        if project.ignore and (not project.project_path or not os.path.exists(project.project_path)):
+            messagebox.showwarning("Предупреждение", "Пожалуйста, сначала установите для проекта существующий путь!")
+            return
+
+        project.ignore = not project.ignore
+        status = "Игнорируется" if project.ignore else "Активен"
+        messagebox.showinfo("Успех", f"Статус проекта '{selected_project_name}' изменен на: {status}.")
+        refresh_project_list()
+
+    # Загрузка проектов
+    saved_projects, error = pickle_operator.try_load_data(PROJECTS_DATA_PATH)
+    print(f'{saved_projects}, error: {error}')
+    if error is not None or saved_projects is None:
+        saved_projects = {}
+        print('clean')
+
+    # Главное окно
+    root = tk.Tk()
+    root.title("Главное меню")
+    icon_path = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/alpha_games_logo_v3.ico')
+    root.iconbitmap(icon_path)
+    root.geometry("800x400")
+
+    tk.Label(root, text="Ваши проекты", font=("Arial", 16)).pack(pady=10)
+
+    # Список проектов
+    project_list = tk.Listbox(root, width=100, height=15)
+    project_list.pack(pady=10)
+    refresh_project_list()
+
+    # Кнопки
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    change_path_button = tk.Button(button_frame, text="Изменить путь", command=change_project_path, width=20)
+    change_path_button.grid(row=0, column=0, padx=5)
+
+    toggle_ignore_button = tk.Button(button_frame, text="Игнорировать (или нет)", command=toggle_ignore_status, width=20)
+    toggle_ignore_button.grid(row=0, column=1, padx=5)
+
+    exit_button = tk.Button(root, text="Выход", command=root.destroy, width=20)
+    exit_button.pack(pady=10)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    main_menu()

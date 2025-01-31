@@ -1,0 +1,994 @@
+Отчёт на 30.01.2025 о файлах *.py:
+Количество файлов - 13
+Количество строк - 914
+Количество символов - 31610
+
+
+
+
+------------------------------------------------------------
+activity_detector.py:
+import asyncio
+from pynput import keyboard, mouse
+from datetime import datetime, timedelta
+
+last_activity_time = datetime.now()  # Время последней активности
+NO_ACTIVITY_TIMEOUT = 30  # Таймаут бездействия в секундах
+timeout = False  # Флаг состояния таймаута
+
+
+def reset_timer():
+    """Сброс таймера активности"""
+    global last_activity_time, timeout
+    last_activity_time = datetime.now()
+    timeout = False
+
+
+# Обработчики событий ввода
+def on_key_press(_):
+    reset_timer()
+
+
+def on_mouse_activity(*_):
+    reset_timer()
+
+
+async def track_timeout():
+    """Мониторинг времени бездействия"""
+    global timeout
+    while True:
+        inactivity = datetime.now() - last_activity_time
+        if inactivity > timedelta(seconds=NO_ACTIVITY_TIMEOUT):
+            timeout = True
+        await asyncio.sleep(1)
+
+
+async def start_tracking_activity_timeout():
+    """Запуск отслеживания активности"""
+    # Инициализация слушателей
+    keyboard_listener = keyboard.Listener(on_press=on_key_press)
+    mouse_listener = mouse.Listener(
+        on_click=on_mouse_activity,
+        on_scroll=on_mouse_activity
+    )
+
+    # Запуск в фоновом режиме
+    keyboard_listener.start()
+    mouse_listener.start()
+
+    # Запуск мониторинга таймаута
+    await track_timeout()
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(start_tracking_activity_timeout())
+    except KeyboardInterrupt:
+        print("Программа остановлена")
+
+
+
+------------------------------------------------------------
+app_another_instance_checker.py:
+import ctypes
+from ctypes import wintypes
+import sys
+
+def is_already_running():
+    """
+    Проверяет, запущено ли приложение с использованием мьютекса Windows.
+    :return: True, если приложение уже запущено. False, если нет.
+    """
+    # Уникальное имя мьютекса
+    mutex_name = "Global\\WorkTimeAnalyser"
+
+    # Создание мьютекса через WinAPI
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    CreateMutex = kernel32.CreateMutexW
+    CreateMutex.argtypes = [wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR]
+    CreateMutex.restype = wintypes.HANDLE
+
+    # Проверка последней ошибки
+    GetLastError = kernel32.GetLastError
+    ERROR_ALREADY_EXISTS = 183
+
+    # Создаём мьютекс
+    handle = CreateMutex(None, False, mutex_name)
+
+    # Проверяем, существует ли уже мьютекс
+    if not handle or GetLastError() == ERROR_ALREADY_EXISTS:
+        return True  # Приложение уже запущено
+
+    return False
+
+
+
+
+------------------------------------------------------------
+encrypted_file_operator.py:
+import hashlib
+import os
+
+from cryptography.fernet import Fernet
+
+# Генерация и использование общего ключа (замените на свой сгенерированный ключ)
+SHARED_KEY = b'rjE884AvlhsJCHdcgB5Ub-S08fPq9IH-GcKqLpjG_n0='
+fernet = Fernet(SHARED_KEY)
+
+def calculate_hash(content):
+    """Вычисляет SHA256-хэш для строки"""
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+def verify_and_read_file(filepath):
+    """Проверяет целостность файла с использованием хэша и расшифровывает его содержимое"""
+    try:
+        with open(filepath, "rb") as file:
+            encrypted_data = file.read()
+            decrypted_data = fernet.decrypt(encrypted_data).decode("utf-8")
+            lines = decrypted_data.splitlines()
+            content = "\n".join(lines[:-1])  # Все строки, кроме последней
+            stored_hash = lines[-1].strip()  # Последняя строка — хэш
+
+            if calculate_hash(content) == stored_hash:
+                return content
+            else:
+                print("Целостность файла нарушена!")
+                return None
+    except FileNotFoundError:
+        print("Файл не найден!")
+        return None
+    except Exception as e:
+        print(f"Ошибка при чтении файла: {e}")
+        return None
+
+def write_file_with_hash(filepath, content):
+    """Шифрует содержимое, добавляет хэш и сохраняет файл"""
+    try:
+        content_with_hash = f"{content}\n{calculate_hash(content)}"
+        encrypted_data = fernet.encrypt(content_with_hash.encode("utf-8"))
+
+        with open(filepath, "wb") as file:
+            file.write(encrypted_data)
+        return True
+    except Exception as e:
+        print(f"Ошибка при записи файла: {e}")
+        return False
+
+# Интеграция в проект
+# Используйте write_file_with_hash и verify_and_read_file везде, где происходит чтение/запись файлов .worktime
+
+def save_worktime_data(filepath, content):
+    """Сохраняет данные о времени работы в зашифрованный файл"""
+    # Получаем путь к директории
+    dir_path = os.path.dirname(filepath)
+    if dir_path and not os.path.exists(dir_path):
+        os.makedirs(dir_path)  # Создаем директорию, если её нет
+
+    success = write_file_with_hash(filepath, content)
+    if success:
+        print(f"Данные успешно сохранены в {filepath}")
+    else:
+        print(f"Не удалось сохранить данные в {filepath}")
+
+def load_worktime_data(filepath):
+    """Загружает данные о времени работы из зашифрованного файла"""
+    content = verify_and_read_file(filepath)
+    if content:
+        print(f"Данные успешно загружены из {filepath}")
+        return content
+    else:
+        print(f"Не удалось загрузить данные из {filepath}")
+        return None
+
+# Пример использования в проекте
+if __name__ == "__main__":
+    test_path = "WORK_TIME/Lomi22880.worktime"
+    loaded_content = load_worktime_data(test_path)
+    if loaded_content:
+        print("Загруженные данные:")
+        print(loaded_content)
+
+
+
+
+------------------------------------------------------------
+network_operator.py:
+# sender.py (отправщик - Windows)
+# -*- coding: utf-8 -*-
+
+"""
+Этот скрипт используется для отправки текстовых данных через сокетное соединение.
+
+Функционал:
+1. Отправка содержимого текстового файла на указанный сервер.
+2. Отправка произвольного текста, переданного в функцию.
+
+Используемые технологии:
+- socket: для создания и управления соединением.
+- os: для работы с путями файловой системы.
+
+Как использовать:
+1. Укажите параметры соединения (IP-адрес и порт) и путь к файлу.
+2. Выберите метод отправки: из файла или передача текста через функцию.
+"""
+import asyncio
+import random
+import socket
+import os
+
+import project
+import time_to_file_operator
+from encrypted_file_operator import load_worktime_data
+
+
+async def send_worktime_data(registered_projects, active_project, username):
+    try:
+        project_path = registered_projects[active_project].project_path
+        global_file_path = os.path.join(project_path, time_to_file_operator.local_path_to_file, f'{username}.worktime')
+        content = load_worktime_data(global_file_path)
+        send_text_info(content[6:])
+    except NotImplementedError as e:
+        print(f'Ошибка при отправке данных на сервер: {e}')
+
+def get_file_to_send():
+    """
+    Возвращает путь к файлу для отправки, находящемуся на рабочем столе пользователя.
+
+    :return: Путь к файлу в виде строки.
+    """
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    return os.path.join(desktop, "file_to_send.txt")
+
+def send_data(data, host, port):
+    """
+    Отправляет данные на указанный сервер.
+
+    :param data: Данные для отправки (bytes).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((host, port))
+            print(f"Соединение с {host}:{port}")
+            s.sendall(data)
+            print("Данные успешно отправлены.")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_file(file_path, host, port):
+    """
+    Отправляет содержимое файла на указанный сервер.
+
+    :param file_path: Путь к файлу для отправки (str).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    try:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+            send_data(data, host, port)
+    except FileNotFoundError:
+        print(f"Файл '{file_path}' не найден.")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_text_info(text, host="178.250.186.26", port=54545):
+    """
+    Отправляет текст, переданный в функцию, на указанный сервер.
+
+    :param text: Текст для отправки (str).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    print(text)
+    try:
+        data = text.encode('utf-8')
+        send_data(data, host, port)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_file_info(file_path=None, host="178.250.186.26", port=54545):
+    """
+    Отправляет содержимое файла на указанный сервер.
+
+    :param file_path: Путь к файлу для отправки (str, optional).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    if file_path is None:
+        file_path = get_file_to_send()
+    print(f"Отправка файла: {file_path}")
+    send_file(file_path, host, port)
+
+
+if __name__ == "__main__":
+    print("Выберите способ отправки:")
+    print("1. Отправить содержимое файла.")
+    print("2. Отправить текст, переданный в функцию.")
+    choice = input("Введите номер варианта: ")
+
+    if choice == '1':
+        send_file_info(file_path="text.txt")
+    elif choice == '2':
+        text = input("Введите текст для отправки: ")
+        send_text_info(text)
+    else:
+        print("Некорректный выбор.")
+
+
+
+
+
+------------------------------------------------------------
+new_project_ui.py:
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import os
+
+
+def open_new_project_ui(program_type: str, project_name: str):
+    """
+    Открывает UI меню с выбором пути нового проекта.
+    :param program_type: Тип программы (юнити, пайчарм и т. д.), будет выведен текстом в меню.
+    :param project_name: Имя проекта, будет выведено текстом в меню.
+    :return: Игнорировать ли проект, указанный путь к проекту.
+    """
+    result = {"ignore": True, "path": None}  # Для хранения результата
+
+    def browse_path():
+        selected_path = filedialog.askdirectory(title="Выберите путь к проекту")
+        if selected_path:
+            path_var.set(selected_path)
+
+    def on_ok():
+        project_path = path_var.get()
+        if not project_path:
+            messagebox.showwarning("Ошибка", "Пожалуйста, укажите путь к проекту!")
+        elif not os.path.exists(project_path):
+            messagebox.showerror("Ошибка", "Указанный путь не существует!")
+        else:
+            result["ignore"] = False
+            result["path"] = project_path
+            root.destroy()  # Завершаем главное окно
+
+    def on_ignore():
+        result["ignore"] = True
+        result["path"] = None
+        root.destroy()  # Завершаем главное окно
+
+    def on_closing():
+        if messagebox.askokcancel("Игнорировать проект?",
+                                  "Этот проект будет игнорирован, вы можете позже изменить это в меню управления проектами. Продолжить?"):
+            result["ignore"] = True
+            result["path"] = None
+            root.destroy()  # Завершаем главное окно
+
+    # Создаем главное окно
+    root = tk.Tk()
+    root.title("Новый проект (отслеживание времени работы)")
+    root.iconbitmap(os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/alpha_games_logo_v3.ico'))
+
+    root.geometry("700x300")
+    root.resizable(True, True)
+
+    # Фокусировка на окне
+    root.lift()
+    root.attributes("-topmost", True)
+    root.after(0, lambda: root.attributes("-topmost", False))  # Снимаем "поверх всех окон", чтобы не мешало
+
+    # Обработка закрытия окна
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+
+    # Создаем надписи
+    tk.Label(root, text=f"Обнаружен новый проект на {program_type}: {project_name}", font=("Arial", 14)).pack(pady=10)
+    tk.Label(root, text="Укажите путь к проекту для отслеживания времени работы над ним:", font=("Arial", 10)).pack()
+
+    # Переменная для хранения пути
+    path_var = tk.StringVar()
+
+    # Поле ввода пути
+    path_entry = tk.Entry(root, textvariable=path_var, width=40, font=("Arial", 10))
+    path_entry.pack(pady=5)
+
+    # Кнопка для открытия проводника
+    browse_button = tk.Button(root, text="Обзор...", command=browse_path, font=("Arial", 10))
+    browse_button.pack(pady=5)
+
+    # Контейнер для кнопок "ОК" и "Игнорировать"
+    button_frame = tk.Frame(root)
+    button_frame.pack(pady=10)
+
+    ignore_button = tk.Button(button_frame, text="Игнорировать проект", command=on_ignore, font=("Arial", 10), width=15)
+    ok_button = tk.Button(button_frame, text="ОК", command=on_ok, font=("Arial", 10), width=15)
+
+    ignore_button.pack(side="left", padx=5)
+    ok_button.pack(side="left", padx=5)
+
+    tk.Label(root, text=f"GO software", font=("Arial", 8)).pack(pady=10)
+
+    # Запуск главного цикла приложения
+    root.mainloop()
+
+    # Возвращаем результат после завершения mainloop
+    return result["ignore"], result["path"]
+
+
+# Пример использования
+if __name__ == "__main__":
+    open_new_project_ui('PYCHARM', 'TEST')
+
+
+
+
+------------------------------------------------------------
+pickle_operator.py:
+import pickle
+
+
+def try_save_data(data, path):
+    """
+    :param data: Данные для сохранения
+    :param path: Путь
+    :return: (успех операции, отчёт об ошибке(если есть))
+    """
+    try:
+        with open(path, 'wb') as file:
+            pickle.dump(data, file)
+            return True, None
+    except Exception as exception:
+        return False, exception
+
+
+def try_load_data(path):
+    """
+    :param path: Путь файла для загрузки
+    :return: (загруженные данные или None в случае ошибки, отчёт об ошибке(если есть))
+    """
+    try:
+        with open(path, 'rb') as file:
+            return pickle.load(file), None
+    except Exception as exception:
+        return None, exception
+
+
+
+------------------------------------------------------------
+project.py:
+
+class Project:
+    def __init__(self, project_name, project_path, ignore = False):
+        self.delta_time = 0
+        self.project_name = project_name
+        self.project_path = project_path
+        self.ignore = ignore
+
+
+
+
+------------------------------------------------------------
+sender.py:
+# sender.py (отправщик - Windows)
+# -*- coding: utf-8 -*-
+
+"""
+Этот скрипт используется для отправки текстовых данных через сокетное соединение.
+
+Функционал:
+1. Отправка содержимого текстового файла на указанный сервер.
+2. Отправка произвольного текста, переданного в функцию.
+
+Используемые технологии:
+- socket: для создания и управления соединением.
+- os: для работы с путями файловой системы.
+
+Как использовать:
+1. Укажите параметры соединения (IP-адрес и порт) и путь к файлу.
+2. Выберите метод отправки: из файла или передача текста через функцию.
+"""
+
+import socket
+import os
+
+def get_file_to_send():
+    """
+    Возвращает путь к файлу для отправки, находящемуся на рабочем столе пользователя.
+
+    :return: Путь к файлу в виде строки.
+    """
+    desktop = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    return os.path.join(desktop, "file_to_send.txt")
+
+def send_data(data, host, port):
+    """
+    Отправляет данные на указанный сервер.
+
+    :param data: Данные для отправки (bytes).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((host, port))
+            print(f"Соединение с {host}:{port}")
+            s.sendall(data)
+            print("Данные успешно отправлены.")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_file(file_path, host, port):
+    """
+    Отправляет содержимое файла на указанный сервер.
+
+    :param file_path: Путь к файлу для отправки (str).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    try:
+        with open(file_path, 'rb') as f:
+            data = f.read()
+            send_data(data, host, port)
+    except FileNotFoundError:
+        print(f"Файл '{file_path}' не найден.")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_text_info(text, host="178.250.186.26", port=45454):
+    """
+    Отправляет текст, переданный в функцию, на указанный сервер.
+
+    :param text: Текст для отправки (str).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    try:
+        data = text.encode('utf-8')
+        send_data(data, host, port)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+
+def send_file_info(file_path=None, host="178.250.186.26", port=12345):
+    """
+    Отправляет содержимое файла на указанный сервер.
+
+    :param file_path: Путь к файлу для отправки (str, optional).
+    :param host: IP-адрес сервера (str).
+    :param port: Порт сервера (int).
+    """
+    if file_path is None:
+        file_path = get_file_to_send()
+    print(f"Отправка файла: {file_path}")
+    send_file(file_path, host, port)
+
+if __name__ == "__main__":
+    print("Выберите способ отправки:")
+    print("1. Отправить содержимое файла.")
+    print("2. Отправить текст, переданный в функцию.")
+    choice = input("Введите номер варианта: ")
+
+    if choice == '1':
+        send_file_info(file_path="C:/PythonProjects/WorkTimeCalculator/WorkTimeAnalyser/WORK_TIME/Lomi22880.worktime")
+    elif choice == '2':
+        text = input("Введите текст для отправки: ")
+        send_text_info(text)
+    else:
+        print("Некорректный выбор.")
+
+
+
+
+------------------------------------------------------------
+start_ui.py:
+import os
+import tkinter as tk
+from tkinter import messagebox
+
+MAX_USERNAME_LENGTH = 30
+
+
+def get_username():
+    """
+    Открывает меню с надписью 'введите имя пользователя'
+    :return: Имя пользователя
+    """
+    def on_submit():
+        username_ = entry.get().strip()
+        if not username_:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, введите своё имя пользователя!")
+        elif len(username_) > MAX_USERNAME_LENGTH:
+            messagebox.showwarning("Предупреждение", f"Имя пользователя не может быть длиннее {MAX_USERNAME_LENGTH} символов!")
+        else:
+            nonlocal user_input
+            user_input = username_
+            root.destroy()
+
+    user_input = None
+
+    root = tk.Tk()
+    root.title("Анализатор времени работы над проектами")
+    root.iconbitmap(os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/alpha_games_logo_v3.ico'))
+    root.geometry("450x200")
+    root.resizable(False, False)
+
+    # Фокусировка на окне
+    root.lift()
+    root.attributes("-topmost", True)
+    root.after(0, lambda: root.attributes("-topmost", False))  # Снимаем "поверх всех окон", чтобы не мешало
+
+    tk.Label(root, text="Добро пожаловать!", font=("Arial", 14)).pack(pady=10)
+    tk.Label(root, text="Введите имя пользователя:").pack()
+
+    entry = tk.Entry(root, width=30)
+    entry.pack(pady=5)
+
+    submit_button = tk.Button(root, text="Ок", command=on_submit)
+    submit_button.pack(pady=10)
+
+    tk.Label(root, text=f"Alpha Technologies", font=("Arial", 8)).pack(pady=10)
+
+    root.mainloop()
+
+    return user_input
+
+# Пример использования
+if __name__ == "__main__":
+    username = get_username()
+    if username:
+        print(f"Введённое имя пользователя: {username}")
+
+
+
+------------------------------------------------------------
+time_converter.py:
+
+def seconds_to_hms(seconds):
+    """Переводит секунды в формат ЧЧ:ММ:СС"""
+    seconds = round(seconds)
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
+def seconds_to_hm(seconds):
+    """Переводит секунды в формат ЧЧ:ММ"""
+    seconds = round(seconds)
+    hours = seconds // 3600
+    minutes = int((seconds % 3600) / 60)
+    return f"{hours:02}:{minutes:02}"
+
+
+def hms_to_seconds(hms : str):
+    """Переводит время в формате 'ЧЧ:ММ:СС' или 'ЧЧ:ММ' обратно в секунды"""
+    parts = list(map(int, hms.split(':')))
+    if len(parts) == 3:
+        hours, minutes, seconds = parts
+        return hours * 3600 + minutes * 60 + seconds
+    elif len(parts) == 2:
+        hours, minutes = parts
+        return hours * 3600 + minutes * 60
+    else:
+        print('Ошибка в time_converter.hms_to_seconds: некорректный формат времени, читай описание функции')
+    return 0
+
+
+
+
+------------------------------------------------------------
+time_to_file_operator.py:
+import encrypted_file_operator
+import time_converter
+from os import path
+
+local_path_to_file = 'WORK_TIME' # Полный путь к файлу будет выглядеть так: путь_к_проекту/local_path_to_file/{имя_пользователя}.worktime
+
+
+async def try_update_work_time_file(username, project_directory, project_name, date, delta_time):
+    """
+    Изменяет время работы над проектом в файле по пути указанному пути
+    :param username: имя пользователя
+    :param project_directory: путь к проекту
+    :param project_name: имя проекта
+    :param date: дата, для которой изменить время работы
+    :param delta_time: изменение времени работы
+    :return: успех операции
+    """
+    global_path_to_file = path.join(project_directory, local_path_to_file, f'{username}.worktime')
+    old_content = encrypted_file_operator.load_worktime_data(global_path_to_file)
+    if old_content is not None:
+        lines_list = old_content.splitlines()
+
+        all_time = 0
+        line_detected = False
+        for line_num in range(5, len(lines_list)):
+            date_time = lines_list[line_num][lines_list[line_num].find(' - ') + 3:]
+            date_time_seconds = time_converter.hms_to_seconds(date_time)
+            all_time += date_time_seconds
+            if not line_detected and date in lines_list[line_num]:
+                lines_list[line_num] = f'{date} - {time_converter.seconds_to_hms(date_time_seconds + delta_time)}'
+                line_detected = True
+
+        total_hours = all_time / float(3600)
+        if total_hours < 1:
+            total_hours = round(total_hours, 2)
+        elif total_hours < 24:
+            total_hours = round(total_hours, 1)
+        else:
+            total_hours = round(total_hours)
+
+        lines_list[3] = f'Total hours: {total_hours}'
+        if not line_detected:
+            lines_list.append(f'{date} - {time_converter.seconds_to_hms(delta_time)}')
+
+        new_content = ''
+        for line in lines_list:
+            new_content += f'{line}\n'
+        new_content = new_content.rstrip()
+        return encrypted_file_operator.save_worktime_data(global_path_to_file, new_content)
+    else:
+        new_content = f"""User: {username}
+Project: {project_name}
+--------------------------------
+Total hours: 0
+--------------------------------
+"""
+        return encrypted_file_operator.save_worktime_data(global_path_to_file, new_content)
+
+
+
+
+------------------------------------------------------------
+txt_operator.py:
+import os
+
+
+def try_read_file(directory):
+    """
+    :return: текст .txt файла (или None в случае ошибки)
+    """
+    try:
+        with open(directory, "r", encoding="utf-8") as file:
+            content = file.read()  # Чтение всего содержимого файла
+            return content
+    except:
+        return None
+
+
+def try_write_file(directory, content):
+    """
+    Сохраняет или обновляет .txt файл. Если директория не существует, создаёт её.
+    :param directory: путь, по которому записать файл
+    :param content: текст, который записать в файл
+    :return: успех операции
+    """
+    try:
+        # Получаем путь к директории
+        dir_path = os.path.dirname(directory)
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path)  # Создаем директорию, если её нет
+
+        # Записываем в файл
+        with open(directory, "w", encoding="utf-8") as file:
+            file.write(content)
+        return True
+    except Exception as e:
+        print(f"Ошибка при записи файла: {e}")
+        return False
+
+
+
+
+
+------------------------------------------------------------
+work_time_analyser.py:
+import asyncio
+import os
+import random
+import time
+from datetime import datetime
+from tkinter import messagebox
+
+import pygetwindow as gw
+import psutil
+import win32gui
+
+import time_to_file_operator
+from project import Project
+from app_another_instance_checker import is_already_running
+import activity_detector
+import pickle_operator
+
+from new_project_ui import open_new_project_ui
+from enum import Enum
+
+from start_ui import get_username
+from network_operator import send_worktime_data
+
+USER_SETTINGS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/user_data.pkl')
+PROJECTS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/projects.pkl')
+
+PROJECTS_SEARCH_DELAY = 5 # Интервал поиска новых проектов
+TIME_ADD_DELAY = 5 # Интервал добавления времени
+FILES_UPDATE_DELAY = 10 # Интервал обновления файлов с временем работы
+
+username = 'default'
+monitored_programs = {'pycharm', 'unity', 'microsoft visual studio'}
+registered_projects = dict()  # key - название проекта, value - экземпляр класса Project
+active_project = '' # Название активного проекта
+
+
+class SupportedPrograms(Enum):
+    NOT_SUPPORTED_PROGRAM = 0,
+    PYCHARM = 1,
+    UNITY = 2,
+    VS = 3
+
+
+def get_pid_from_hwnd(hwnd):
+    """Получает PID процесса по HWND окна"""
+    import win32process
+    try:
+        _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        return pid
+    except Exception as e:
+        print(f"Error getting PID: {e}")
+        return None
+
+def get_program_type(window, hwnd):
+    """Определяет, поддерживается ли программа, и в положительном случае её тип"""
+    pid = get_pid_from_hwnd(hwnd)
+    if pid:
+        try:
+            proc = psutil.Process(pid)
+            proc_name = proc.name().lower()
+            window_title = window.title.lower()
+
+            if 'pycharm' in monitored_programs and 'pycharm' in proc_name and window_title[:window_title.rfind(' – ')] != '':
+                return SupportedPrograms.PYCHARM
+            elif ('unity' in monitored_programs and
+                  'unity' in proc_name and
+                  'unity hub' not in proc_name and
+                  'unity package manage' not in proc_name and
+                  'unity' in window_title and
+                  not 'unity.ex' in window_title):
+                return SupportedPrograms.UNITY
+            elif 'microsoft visual studio' in monitored_programs and 'microsoft visual studio' in window_title:
+                return SupportedPrograms.VS
+            else:
+                return SupportedPrograms.NOT_SUPPORTED_PROGRAM
+        except (psutil.NoSuchProcess, psutil.AccessDenied, ValueError) as e:
+            print(f"Ошибка при обработке PID {pid}: {e}")
+    return SupportedPrograms.NOT_SUPPORTED_PROGRAM
+
+def get_project_name_from_program_title(program_type, program_title):
+    match program_type:
+        case SupportedPrograms.PYCHARM:
+            return program_title[:program_title.rfind(' – ')]
+        case SupportedPrograms.UNITY:
+            return program_title[:program_title.find(' - ')]
+        case SupportedPrograms.VS:
+            print(f'Found VS: {program_title[:program_title.find(' - ')]}')
+            return program_title[:program_title.find(' - ')]
+
+
+async def search_active_projects():
+    global active_project, registered_projects
+    
+    while True:
+        await asyncio.sleep(PROJECTS_SEARCH_DELAY)
+        active_window = gw.getActiveWindow()
+        if active_window:
+            hwnd = win32gui.GetForegroundWindow()
+            #print(f'{get_program_type(active_window, hwnd).name}: {get_project_name_from_program_title(get_program_type(active_window, hwnd), active_window.title)}')
+
+            program_type = get_program_type(active_window, hwnd)
+            if program_type is not SupportedPrograms.NOT_SUPPORTED_PROGRAM:
+                loaded_projects, error = pickle_operator.try_load_data(PROJECTS_DATA_PATH)
+                if loaded_projects and 'needs_update_13571' in loaded_projects:
+                    print('Настройки проектов были изменены, загружаю...')
+                    registered_projects, _ = pickle_operator.try_load_data(PROJECTS_DATA_PATH)
+                    registered_projects.pop('needs_update_13571')
+                    pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
+
+                project_name = get_project_name_from_program_title(program_type, active_window.title)
+                if not project_name in registered_projects.keys():
+                    ignore, project_path = open_new_project_ui(program_type.name, project_name)
+                    registered_projects[project_name] = Project(project_name, project_path, ignore)
+                    pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
+                else:
+                    active_project = project_name
+            else:
+                active_project = None
+        else:
+            active_project = None
+        print(f'act proj: {active_project}')
+        #if active_project in registered_projects:
+            #print(f'{active_project}: {registered_projects[active_project].delta_time}')
+        
+        
+async def add_work_time():
+    await asyncio.sleep(TIME_ADD_DELAY)
+    system_last_time = time.time()
+
+    while True:
+        await asyncio.sleep(TIME_ADD_DELAY)
+        system_time_delta = abs(time.time() - system_last_time)
+        multiplier = float(system_time_delta) / TIME_ADD_DELAY
+        #print(f'm: {multiplier}')
+        if multiplier < 0.9 or multiplier > 1.1:
+            print('Слишком большой разрыв времени, кто-то пытается жульничать? Ай-яй')
+        else:
+            if active_project is not None and not activity_detector.timeout:
+                if active_project in registered_projects:
+                    registered_projects[active_project].delta_time += system_time_delta
+                else:
+                    print('Непредвиденная ошибка: активный проект отсутствует в словаре проектов')
+        system_last_time = time.time()
+
+
+async def update_work_time_files():
+    while True:
+        await asyncio.sleep(FILES_UPDATE_DELAY)
+        if active_project is not None and active_project in registered_projects:
+            # Форматирование текущей даты в ДД.ММ.ГГГГ
+            current_date = datetime.now().strftime("%d.%m.%Y")
+
+            if not registered_projects[active_project].ignore and type(registered_projects[active_project].project_path) == str and os.path.exists(registered_projects[active_project].project_path):
+                try:
+                    asyncio.create_task(time_to_file_operator.try_update_work_time_file(username, registered_projects[active_project].project_path, active_project, current_date, int(registered_projects[active_project].delta_time)))
+                    registered_projects[active_project].delta_time -= int(registered_projects[active_project].delta_time)
+                except Exception as e:
+                    print(f'Непредвиденная ошибка при обновлении файла с временем работы: {e}')
+
+
+async def send_data_regularly():
+    while True:
+        await asyncio.sleep(random.randint(3, 6))
+        try:
+            if active_project in registered_projects:
+                asyncio.create_task(send_worktime_data(registered_projects, active_project, username))
+            else:
+                print(f'Ключа {active_project} нет в словаре')
+        except NotImplementedError as e:
+            print(f'Ошибка в цикле отправки данных на сервер: {e}')
+
+
+async def start():
+    try:
+        # Проверяем, не запущено ли ещё одно такое же приложение
+        if is_already_running():
+            messagebox.showerror("Ошибка", "Приложение уже запущено!")
+            return
+
+        # Приветственное окно + ввод ника
+        global username
+        username, _ = pickle_operator.try_load_data(USER_SETTINGS_DATA_PATH)
+        if username is None:
+            username = get_username()
+            if not username:
+                return
+            pickle_operator.try_save_data(username, USER_SETTINGS_DATA_PATH)
+
+        # Загрузка проектов
+        global registered_projects
+        registered_projects, error = pickle_operator.try_load_data(PROJECTS_DATA_PATH)
+        if error is not None:
+            print(f'Error loading projects data: {error}, creating new file')
+            registered_projects = dict()
+            pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
+
+        # Запуск корутин
+        await asyncio.gather(
+            activity_detector.start_tracking_activity_timeout(),
+            search_active_projects(),
+            add_work_time(),
+            update_work_time_files(),
+            send_data_regularly()
+        )
+    except KeyboardInterrupt:
+        print("Program stopped")
+
+
+if __name__ == "__main__":
+    asyncio.run(start())
+
