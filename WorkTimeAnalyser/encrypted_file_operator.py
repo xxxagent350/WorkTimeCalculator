@@ -58,7 +58,7 @@ def save_worktime_data(filepath, content):
 
     success = write_file_with_hash(filepath, content)
     if success:
-        print(f"Данные успешно сохранены в {filepath}")
+        pass
     else:
         print(f"Не удалось сохранить данные в {filepath}")
 
@@ -66,7 +66,7 @@ def load_worktime_data(filepath):
     """Загружает данные о времени работы из зашифрованного файла"""
     content = verify_and_read_file(filepath)
     if content:
-        print(f"Данные успешно загружены из {filepath}")
+        pass
         return content
     else:
         print(f"Не удалось загрузить данные из {filepath}")

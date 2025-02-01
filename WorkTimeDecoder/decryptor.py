@@ -18,7 +18,7 @@ def decrypt_and_open(filepath):
         # Удаляем последнюю строку, это - хеш
         decrypted_data = "\n".join(decrypted_data.splitlines()[:-1])
 
-        temp_file = f"decrypted_temp_{random.randint(0, 1000000)}.txt"
+        temp_file = "decrypted_temp.txt"
         with open(temp_file, "w", encoding="utf-8") as temp:
             temp.write(decrypted_data)
 

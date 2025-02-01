@@ -35,5 +35,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\PythonProjects\\WorkTimeCalculator\\WorkTimeMainMenu\\alpha_games_logo_v3.ico'],
+    icon=['C:\\PythonProjects\\WorkTimeCalculator\\WorkTimeAnalyser\\alpha_games_logo_v3.ico'],
 )

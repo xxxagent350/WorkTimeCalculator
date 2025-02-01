@@ -1,7 +1,7 @@
-Отчёт на 30.01.2025 о файлах *.py:
+Отчёт на 01.02.2025 о файлах *.py:
 Количество файлов - 13
-Количество строк - 914
-Количество символов - 31610
+Количество строк - 940
+Количество символов - 32365
 
 
 
@@ -13,7 +13,7 @@ from pynput import keyboard, mouse
 from datetime import datetime, timedelta
 
 last_activity_time = datetime.now()  # Время последней активности
-NO_ACTIVITY_TIMEOUT = 30  # Таймаут бездействия в секундах
+NO_ACTIVITY_TIMEOUT = 60  # Таймаут бездействия в секундах
 timeout = False  # Флаг состояния таймаута
 
 
@@ -223,12 +223,16 @@ from encrypted_file_operator import load_worktime_data
 
 async def send_worktime_data(registered_projects, active_project, username):
     try:
-        project_path = registered_projects[active_project].project_path
-        global_file_path = os.path.join(project_path, time_to_file_operator.local_path_to_file, f'{username}.worktime')
-        content = load_worktime_data(global_file_path)
-        send_text_info(content[6:])
-    except NotImplementedError as e:
-        print(f'Ошибка при отправке данных на сервер: {e}')
+        if active_project in registered_projects:
+            project_path = registered_projects[active_project].project_path
+            global_file_path = os.path.join(project_path, time_to_file_operator.local_path_to_file, f'{username}.worktime')
+            content = load_worktime_data(global_file_path)
+            if content:
+                return await send_text_info_async(content[6:])
+        return False
+    except Exception as e:
+        print(f'Ошибка при отправке данных: {e}')
+        return False
 
 def get_file_to_send():
     """
@@ -300,6 +304,30 @@ def send_file_info(file_path=None, host="178.250.186.26", port=54545):
         file_path = get_file_to_send()
     print(f"Отправка файла: {file_path}")
     send_file(file_path, host, port)
+
+# Добавляем асинхронные версии функций
+async def async_send_data(data, host, port):
+    """Асинхронная отправка данных"""
+    try:
+        reader, writer = await asyncio.open_connection(host, port)
+        writer.write(data)
+        await writer.drain()
+        writer.close()
+        await writer.wait_closed()
+        print(f"Данные успешно отправлены на {host}:{port}")
+        return True
+    except Exception as e:
+        print(f"Ошибка подключения: {e}")
+        return False
+
+async def send_text_info_async(text, host="178.250.186.26", port=54545):
+    """Асинхронная отправка текста"""
+    try:
+        data = text.encode('utf-8')
+        return await async_send_data(data, host, port)
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return False
 
 
 if __name__ == "__main__":
@@ -943,14 +971,12 @@ async def update_work_time_files():
 
 async def send_data_regularly():
     while True:
-        await asyncio.sleep(random.randint(3, 6))
+        await asyncio.sleep(random.randint(300, 600))
         try:
-            if active_project in registered_projects:
-                asyncio.create_task(send_worktime_data(registered_projects, active_project, username))
-            else:
-                print(f'Ключа {active_project} нет в словаре')
-        except NotImplementedError as e:
-            print(f'Ошибка в цикле отправки данных на сервер: {e}')
+            # Не блокируем цикл событий
+            await send_worktime_data(registered_projects, active_project, username)
+        except Exception as e:
+            print(f'Ошибка: {e}')
 
 
 async def start():

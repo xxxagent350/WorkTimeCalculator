@@ -27,11 +27,15 @@ PROJECTS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program
 PROJECTS_SEARCH_DELAY = 5 # Интервал поиска новых проектов
 TIME_ADD_DELAY = 5 # Интервал добавления времени
 FILES_UPDATE_DELAY = 10 # Интервал обновления файлов с временем работы
+MIN_TIME_TO_REGISTER_PROJECT = 30 # Проект должен быть открыт как минимум столько секунд, чтобы появилось окошко с предложением добавить проект
 
 username = 'default'
 monitored_programs = {'pycharm', 'unity', 'microsoft visual studio'}
 registered_projects = dict()  # key - название проекта, value - экземпляр класса Project
 active_project = '' # Название активного проекта
+
+unknown_project_name = ''
+unknown_project_time = 0
 
 
 class SupportedPrograms(Enum):
@@ -64,6 +68,7 @@ def get_program_type(window, hwnd):
                 return SupportedPrograms.PYCHARM
             elif ('unity' in monitored_programs and
                   'unity' in proc_name and
+                  len(window_title.split(' - ')) >= 4 and
                   'unity hub' not in proc_name and
                   'unity package manage' not in proc_name and
                   'unity' in window_title and
@@ -84,12 +89,11 @@ def get_project_name_from_program_title(program_type, program_title):
         case SupportedPrograms.UNITY:
             return program_title[:program_title.find(' - ')]
         case SupportedPrograms.VS:
-            print(f'Found VS: {program_title[:program_title.find(' - ')]}')
             return program_title[:program_title.find(' - ')]
 
 
 async def search_active_projects():
-    global active_project, registered_projects
+    global active_project, registered_projects, unknown_project_name, unknown_project_time
     
     while True:
         await asyncio.sleep(PROJECTS_SEARCH_DELAY)
@@ -109,16 +113,28 @@ async def search_active_projects():
 
                 project_name = get_project_name_from_program_title(program_type, active_window.title)
                 if not project_name in registered_projects.keys():
-                    ignore, project_path = open_new_project_ui(program_type.name, project_name)
-                    registered_projects[project_name] = Project(project_name, project_path, ignore)
-                    pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
+                    if unknown_project_name == project_name:
+                        if unknown_project_time < MIN_TIME_TO_REGISTER_PROJECT:
+                            unknown_project_time += PROJECTS_SEARCH_DELAY
+                    else:
+                        unknown_project_time = 0
+                        unknown_project_name = project_name
+                    print(f'{unknown_project_name}: {unknown_project_time}')
+
+                    if unknown_project_time >= MIN_TIME_TO_REGISTER_PROJECT:
+                        unknown_project_time = 0
+                        ignore, project_path = open_new_project_ui(program_type.name, project_name)
+                        registered_projects[project_name] = Project(project_name, project_path, ignore)
+                        pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
                 else:
                     active_project = project_name
+                    unknown_project_time = 0
             else:
                 active_project = None
+                unknown_project_time = 0
         else:
             active_project = None
-        print(f'act proj: {active_project}')
+            unknown_project_time = 0
         #if active_project in registered_projects:
             #print(f'{active_project}: {registered_projects[active_project].delta_time}')
         

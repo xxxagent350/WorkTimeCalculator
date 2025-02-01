@@ -4,6 +4,7 @@ from tkinter import messagebox, filedialog
 import pickle_operator
 import project
 
+USER_SETTINGS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/user_data.pkl')
 PROJECTS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/projects.pkl')
 
 def main_menu():
@@ -56,9 +57,11 @@ def main_menu():
         saved_projects = {}
         print('clean')
 
+    username, _ = pickle_operator.try_load_data(USER_SETTINGS_DATA_PATH)
+
     # Главное окно
     root = tk.Tk()
-    root.title("Главное меню")
+    root.title(f"Приветствую, {username}!")
     icon_path = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/alpha_games_logo_v3.ico')
     root.iconbitmap(icon_path)
     root.geometry("800x400")
