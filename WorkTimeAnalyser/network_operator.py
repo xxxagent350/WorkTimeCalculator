@@ -134,18 +134,3 @@ async def send_text_info_async(text, host="178.250.186.26", port=54545):
         print(f"Ошибка: {e}")
         return False
 
-
-if __name__ == "__main__":
-    print("Выберите способ отправки:")
-    print("1. Отправить содержимое файла.")
-    print("2. Отправить текст, переданный в функцию.")
-    choice = input("Введите номер варианта: ")
-
-    if choice == '1':
-        send_file_info(file_path="text.txt")
-    elif choice == '2':
-        text = input("Введите текст для отправки: ")
-        send_text_info(text)
-    else:
-        print("Некорректный выбор.")
-

@@ -20,6 +20,7 @@ from enum import Enum
 
 from start_ui import get_username
 from network_operator import send_worktime_data
+from icon_manager import start_tray_async, update_tray_state
 
 USER_SETTINGS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/user_data.pkl')
 PROJECTS_DATA_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/projects.pkl')
@@ -148,6 +149,8 @@ async def add_work_time():
         system_time_delta = abs(time.time() - system_last_time)
         multiplier = float(system_time_delta) / TIME_ADD_DELAY
         #print(f'm: {multiplier}')
+
+
         if multiplier < 0.9 or multiplier > 1.1:
             print('Слишком большой разрыв времени, кто-то пытается жульничать? Ай-яй')
         else:
@@ -155,8 +158,23 @@ async def add_work_time():
                 if active_project in registered_projects:
                     registered_projects[active_project].delta_time += system_time_delta
                 else:
-                    print('Непредвиденная ошибка: активный проект отсутствует в словаре проектов')
+                    print(f'Непредвиденная ошибка: активный проект ({active_project}) отсутствует в словаре проектов')
         system_last_time = time.time()
+
+async def control_icon():
+    while True:
+        await asyncio.sleep(PROJECTS_SEARCH_DELAY)
+        active_proj = registered_projects.get(active_project)
+        if active_proj is not None:
+            if not active_proj.ignore:
+                if not activity_detector.timeout:
+                    update_tray_state("active")
+                else:
+                    update_tray_state("paused")
+            else:
+                update_tray_state("ignored")
+        else:
+            update_tray_state("waiting")
 
 
 async def update_work_time_files():
@@ -178,8 +196,13 @@ async def send_data_regularly():
     while True:
         await asyncio.sleep(random.randint(300, 600))
         try:
-            # Не блокируем цикл событий
-            await send_worktime_data(registered_projects, active_project, username)
+            # Запускаем отправку с тайм-аутом в 60 секунд
+            await asyncio.wait_for(
+                send_worktime_data(registered_projects, active_project, username),
+                timeout=10
+            )
+        except asyncio.TimeoutError:
+            print('Превышено время ожидания отправки данных')
         except Exception as e:
             print(f'Ошибка: {e}')
 
@@ -208,13 +231,17 @@ async def start():
             registered_projects = dict()
             pickle_operator.try_save_data(registered_projects, PROJECTS_DATA_PATH)
 
+        # Иконка
+        start_tray_async()
+
         # Запуск корутин
         await asyncio.gather(
             activity_detector.start_tracking_activity_timeout(),
             search_active_projects(),
             add_work_time(),
             update_work_time_files(),
-            send_data_regularly()
+            send_data_regularly(),
+            control_icon()
         )
     except KeyboardInterrupt:
         print("Program stopped")
