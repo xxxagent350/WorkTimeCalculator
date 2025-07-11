@@ -32,8 +32,12 @@ async def send_worktime_data(registered_projects, active_project, username):
             project_path = registered_projects[active_project].project_path
             global_file_path = os.path.join(project_path, time_to_file_operator.local_path_to_file, f'{username}.worktime')
             content = load_worktime_data(global_file_path)
+            lines = content.splitlines()
+            user_nick = lines[0][6:]
+            project_name = lines[1][9:]
+            content = f"{user_nick} - {project_name}\n{content}"
             if content:
-                return await send_text_info_async(content[6:])
+                return await send_text_info_async(content)
         return False
     except Exception as e:
         print(f'Ошибка при отправке данных: {e}')
