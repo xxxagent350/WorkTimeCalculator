@@ -168,13 +168,13 @@ async def control_icon():
         if active_proj is not None:
             if not active_proj.ignore:
                 if not activity_detector.timeout:
-                    update_tray_state("active")
+                    update_tray_state("active", f"Время идёт ({active_project} - {active_proj.project_path}/{time_to_file_operator.local_path_to_file})")
                 else:
-                    update_tray_state("paused")
+                    update_tray_state("paused", "Продолжите работать для возобновления подсчёта времени")
             else:
-                update_tray_state("ignored")
+                update_tray_state("ignored", f"Проект игнорируется. Вы можете изменить это: Пуск -> Time Analyzer Menu -> {active_project}")
         else:
-            update_tray_state("waiting")
+            update_tray_state("waiting", "Ожидание работы в поддерживаемой среде разработки")
 
 
 async def update_work_time_files():
@@ -243,8 +243,8 @@ async def start():
             send_data_regularly(),
             control_icon()
         )
-    except KeyboardInterrupt:
-        print("Program stopped")
+    except Exception as e:
+        messagebox.showerror(f"Непредвиденная ошибка, Work Time Analyzer остановлен ({e})", "Приложение уже запущено!")
 
 
 if __name__ == "__main__":

@@ -66,7 +66,6 @@ def load_worktime_data(filepath):
     """Загружает данные о времени работы из зашифрованного файла"""
     content = verify_and_read_file(filepath)
     if content:
-        pass
         return content
     else:
         print(f"Не удалось загрузить данные из {filepath}")

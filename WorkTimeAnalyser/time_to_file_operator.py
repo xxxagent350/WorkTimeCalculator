@@ -19,6 +19,10 @@ async def try_update_work_time_file(username, project_directory, project_name, d
     old_content = encrypted_file_operator.load_worktime_data(global_path_to_file)
     if old_content is not None:
         lines_list = old_content.splitlines()
+        old_proj_names = lines_list[1][9:].split(' ⁂ ')
+        if not project_name in old_proj_names:
+            lines_list[1] += f" ⁂ {project_name}"
+        print(lines_list[1])
 
         all_time = 0
         line_detected = False

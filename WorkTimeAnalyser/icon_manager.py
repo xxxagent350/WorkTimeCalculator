@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 # Возможные состояния: 'waiting', 'paused', 'active'
 tray_state = 'waiting'
+description = 'Должен прогрузится через несколько секунд...'
 _icon_instance = None
 ICON_PATH = os.path.join(os.environ.get("SystemDrive", "C:"), '/Program Files/WorkTimeAnalyser/alpha_games_logo_v3.ico')
 
@@ -20,13 +21,14 @@ def generate_icon(color: str) -> Image.Image:
     return img
 
 def get_state_description_and_icon(state: str):
-    mapping = {
-        'waiting': ('Ожидание начала работы над проектом...', '#007bff'),
-        'paused':  ('Время работы не идёт, продолжите работать над проектом чтобы возобновить...', '#f6ff00'),
-        'ignored': ('Проект игнорируется, вы можете изменить это в Time Analyser Menu, который найдёте в меню пуск', '#ff0000'),
-        'active':  ('Всё ок, время идёт', '#00ff00'),
+    colors = {
+        'waiting': '#007bff',
+        'paused':  '#f6ff00',
+        'ignored': '#ff0000',
+        'active':  '#00ff00',
     }
-    desc, color = mapping.get(state, ('Неизвестное состояние', '#000000'))
+    color = colors.get(state, '#000000')
+    desc = description
     path = ICON_PATH
 
     try:
@@ -76,7 +78,8 @@ def start_tray_async():
     loop = asyncio.get_event_loop()
     loop.run_in_executor(None, run_tray_loop_sync)
 
-def update_tray_state(state: str):
+def update_tray_state(state: str, description_: str):
     """Обновление глобального состояния иконки"""
-    global tray_state
+    global tray_state, description
     tray_state = state
+    description = description_
