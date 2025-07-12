@@ -50,6 +50,20 @@ def main_menu():
         messagebox.showinfo("Успех", f"Статус проекта '{selected_project_name}' изменен на: {status}.")
         refresh_project_list()
 
+    def delete_project():
+        sel = project_list.curselection()
+        if not sel:
+            messagebox.showwarning("Предупреждение", "Пожалуйста, выберите проект для удаления!")
+            return
+        name = project_list.get(sel[0]).split(" – ")[0]
+        if messagebox.askyesno(
+                "Подтвердите удаление",
+                f"Вы уверены, что хотите удалить проект '{name}' из списка?"
+        ):
+            saved_projects.pop(name, None)
+            messagebox.showinfo("Удалено", f"Проект '{name}' удалён из списка.")
+            refresh_project_list()
+
     # Загрузка проектов
     saved_projects, error = pickle_operator.try_load_data(PROJECTS_DATA_PATH)
     print(f'{saved_projects}, error: {error}')
@@ -82,6 +96,11 @@ def main_menu():
 
     toggle_ignore_button = tk.Button(button_frame, text="Игнорировать (или нет)", command=toggle_ignore_status, width=20)
     toggle_ignore_button.grid(row=0, column=1, padx=5)
+
+    delete_button = tk.Button(
+        button_frame, text="Удалить проект", command=delete_project, width=20
+    )
+    delete_button.grid(row=0, column=2, padx=5)
 
     exit_button = tk.Button(root, text="Выход", command=root.destroy, width=20)
     exit_button.pack(pady=10)

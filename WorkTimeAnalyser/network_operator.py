@@ -30,7 +30,7 @@ async def send_worktime_data(registered_projects, active_project, username):
     try:
         if active_project in registered_projects:
             project_path = registered_projects[active_project].project_path
-            global_file_path = os.path.join(project_path, time_to_file_operator.local_path_to_file, f'{username}.worktime')
+            global_file_path = os.path.join(project_path, time_to_file_operator.LOCAL_PATH_TO_FILE, f'{username}.worktime')
             content = load_worktime_data(global_file_path)
             lines = content.splitlines()
             user_nick = lines[0][6:]

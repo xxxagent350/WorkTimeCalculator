@@ -20,7 +20,7 @@ def open_new_project_ui(program_type: str, project_name: str):
     def on_ok():
         project_path = path_var.get()
         if not project_path:
-            messagebox.showwarning("Ошибка", "Пожалуйста, укажите путь к проекту!")
+            messagebox.showwarning("Ошибка", "Пожалуйста, укажите путь сохранения файла!")
         elif not os.path.exists(project_path):
             messagebox.showerror("Ошибка", "Указанный путь не существует!")
         else:
@@ -58,7 +58,7 @@ def open_new_project_ui(program_type: str, project_name: str):
 
     # Создаем надписи
     tk.Label(root, text=f"Обнаружен новый проект на {program_type}: {project_name}", font=("Arial", 14)).pack(pady=10)
-    tk.Label(root, text="Укажите путь к проекту для отслеживания времени работы над ним:", font=("Arial", 10)).pack()
+    tk.Label(root, text="Укажите путь, по которому будет создана папка WORK_TIME, в которой будет файл с временем работы:", font=("Arial", 10)).pack()
 
     # Переменная для хранения пути
     path_var = tk.StringVar()

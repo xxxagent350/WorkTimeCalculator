@@ -1,8 +1,11 @@
+import os
+
 import encrypted_file_operator
 import time_converter
 from os import path
 
-local_path_to_file = 'WORK_TIME' # Полный путь к файлу будет выглядеть так: путь_к_проекту/local_path_to_file/{имя_пользователя}.worktime
+LOCAL_PATH_TO_FILE = 'WORK_TIME' # Полный путь к файлу будет выглядеть так: путь_к_проекту/local_path_to_file/{username} - {project_name}.{FILE_EXTENSION}
+FILE_EXTENSION = 'worktime'
 
 
 async def try_update_work_time_file(username, project_directory, project_name, date, delta_time):
@@ -15,7 +18,10 @@ async def try_update_work_time_file(username, project_directory, project_name, d
     :param delta_time: изменение времени работы
     :return: успех операции
     """
-    global_path_to_file = path.join(project_directory, local_path_to_file, f'{username}.worktime')
+    global_path = path.join(project_directory, LOCAL_PATH_TO_FILE)
+    if not os.path.isdir(global_path):
+        os.makedirs(global_path)
+    global_path_to_file = path.join(global_path, f'{username} - {project_name}.{FILE_EXTENSION}')
     old_content = encrypted_file_operator.load_worktime_data(global_path_to_file)
     if old_content is not None:
         lines_list = old_content.splitlines()
@@ -51,6 +57,16 @@ async def try_update_work_time_file(username, project_directory, project_name, d
         new_content = new_content.rstrip()
         return encrypted_file_operator.save_worktime_data(global_path_to_file, new_content)
     else:
+        # Проверка на старый формат названия
+        folder = global_path
+        for filename in os.listdir(folder):
+            if filename == f"{username}.{FILE_EXTENSION}":
+                old_filepath = path.join(global_path, filename)
+                new_filepath = path.join(global_path, f'{username} - {project_name}.{FILE_EXTENSION}')
+                os.rename(old_filepath, new_filepath)
+                return
+
+        # Создание нового файла
         new_content = f"""User: {username}
 Project: {project_name}
 --------------------------------

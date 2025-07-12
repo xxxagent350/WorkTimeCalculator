@@ -31,7 +31,7 @@ FILES_UPDATE_DELAY = 10 # Интервал обновления файлов с 
 MIN_TIME_TO_REGISTER_PROJECT = 30 # Проект должен быть открыт как минимум столько секунд, чтобы появилось окошко с предложением добавить проект
 
 username = 'default'
-monitored_programs = {'pycharm', 'unity', 'microsoft visual studio'}
+monitored_programs = {'pycharm', 'unity', 'microsoft visual studio', 'fl studio'}
 registered_projects = dict()  # key - название проекта, value - экземпляр класса Project
 active_project = '' # Название активного проекта
 
@@ -43,7 +43,8 @@ class SupportedPrograms(Enum):
     NOT_SUPPORTED_PROGRAM = 0,
     PYCHARM = 1,
     UNITY = 2,
-    VS = 3
+    VS = 3,
+    FL_STUDIO = 4
 
 
 def get_pid_from_hwnd(hwnd):
@@ -77,13 +78,16 @@ def get_program_type(window, hwnd):
                 return SupportedPrograms.UNITY
             elif 'microsoft visual studio' in monitored_programs and 'microsoft visual studio' in window_title:
                 return SupportedPrograms.VS
+            elif 'fl studio' in monitored_programs and 'fl studio' in window_title and len(window_title.split(" - ")) >= 2:
+                return SupportedPrograms.FL_STUDIO
             else:
                 return SupportedPrograms.NOT_SUPPORTED_PROGRAM
         except (psutil.NoSuchProcess, psutil.AccessDenied, ValueError) as e:
             print(f"Ошибка при обработке PID {pid}: {e}")
+            return SupportedPrograms.NOT_SUPPORTED_PROGRAM
     return SupportedPrograms.NOT_SUPPORTED_PROGRAM
 
-def get_project_name_from_program_title(program_type, program_title):
+def get_project_name_from_program_title(program_type: str, program_title: str):
     match program_type:
         case SupportedPrograms.PYCHARM:
             return program_title[:program_title.rfind(' – ')]
@@ -91,6 +95,11 @@ def get_project_name_from_program_title(program_type, program_title):
             return program_title[:program_title.find(' - ')]
         case SupportedPrograms.VS:
             return program_title[:program_title.find(' - ')]
+        case SupportedPrograms.FL_STUDIO:
+            proj_name = program_title[:program_title.find(' - ')]
+            if proj_name.endswith('.flp'):
+                proj_name = proj_name[:-4]
+            return proj_name
 
 
 async def search_active_projects():
@@ -168,7 +177,7 @@ async def control_icon():
         if active_proj is not None:
             if not active_proj.ignore:
                 if not activity_detector.timeout:
-                    update_tray_state("active", f"Время идёт ({active_project} - {active_proj.project_path}/{time_to_file_operator.local_path_to_file})")
+                    update_tray_state("active", f"Время идёт ({active_project} - {active_proj.project_path}/{time_to_file_operator.LOCAL_PATH_TO_FILE})")
                 else:
                     update_tray_state("paused", "Продолжите работать для возобновления подсчёта времени")
             else:

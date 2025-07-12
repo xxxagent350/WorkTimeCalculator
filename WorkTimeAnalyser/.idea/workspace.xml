@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7ab28e91-4c03-4f08-b8f7-d1e91859c1a2" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/WorkTimeAnalyser.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/WorkTimeAnalyser.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WORK_TIME/Lomi22880 PC.worktime" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/Analysis-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/Analysis-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/EXE-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/EXE-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/PKG-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/PKG-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/PYZ-00.pyz" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/PYZ-00.pyz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/PYZ-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/PYZ-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/base_library.zip" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/base_library.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/warn-work_time_analyser.txt" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/warn-work_time_analyser.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/work_time_analyser.pkg" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/work_time_analyser.pkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/work_time_analyser/xref-work_time_analyser.html" beforeDir="false" afterPath="$PROJECT_DIR$/build/work_time_analyser/xref-work_time_analyser.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dist/work_time_analyser.exe" beforeDir="false" afterPath="$PROJECT_DIR$/dist/work_time_analyser.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/network_operator.py" beforeDir="false" afterPath="$PROJECT_DIR$/network_operator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/new_project_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/new_project_ui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/time_to_file_operator.py" beforeDir="false" afterPath="$PROJECT_DIR$/time_to_file_operator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/work_time_analyser.py" beforeDir="false" afterPath="$PROJECT_DIR$/work_time_analyser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/Analysis-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/Analysis-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/EXE-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/EXE-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PKG-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PKG-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PYZ-00.pyz" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PYZ-00.pyz" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PYZ-00.toc" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/PYZ-00.toc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/main_menu.pkg" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/main_menu.pkg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/xref-main_menu.html" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/build/main_menu/xref-main_menu.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/dist/main_menu.exe" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/dist/main_menu.exe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/main_menu.py" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/main_menu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../WorkTimeMainMenu/report.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../WorkTimeMainMenu/report.txt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 3
+}]]></component>
+  <component name="ProjectId" id="2zlrSGZhprA5IBFanCzfErDxThv" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.work_time_analyser.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-4f4e415b4190-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.26053.29" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7ab28e91-4c03-4f08-b8f7-d1e91859c1a2" name="Changes" comment="" />
+      <created>1752316499070</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1752316499070</updated>
+    </task>
+    <servers />
+  </component>
+</project>
